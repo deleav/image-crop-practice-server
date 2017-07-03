@@ -1,4 +1,6 @@
 var express = require('express');
+var fs = require('fs');
+var im = require('imagemagick');
 var router = express.Router();
 // var multer = require('multer');
 
@@ -19,18 +21,34 @@ router.get('/', function( req, res, next ) {
 });
 
 router.get('/img', function( req, res, next ) {
-  console.log( req.params );
-  res.send('http://localhost:9000/uploads/avatar.jpeg');
+  console.log( req.query );
+  var w = req.query.w;
+  var h = req.query.h;
+  if ( w && h ) {
+    im.convert(['./public/uploads/avatar.jpg', '-resize', `${w}x${h}`, `./public/uploads/avatar-${w}x${h}.jpg`],
+      function(err, stdout){
+        if (err) throw err;
+        console.log('stdout:', stdout);
+        return res.status(200).send({
+          status: 200,
+          img: `http://localhost:9000/uploads/avatar-${w}x${h}.jpg`
+        });
+      });
+  }
+  else if ( fs.existsSync( './public/uploads/avatar.jpg' ) )
+    return res.status(200).send({
+      status: 200,
+      img: 'http://localhost:9000/uploads/avatar.jpg'
+    });
+  else
+    return res.status( 500 ).send('File not found');
 });
 
 router.post('/upload', function(req, res, next) {
-  res.header('Access-Control-Allow-Origin', '*');
-  res.header('Access-Control-Allow-Methods', 'GET,PUT,POST,DELETE');
-  res.header('Access-Control-Allow-Headers', 'Content-Type,authorization');
-  console.log( req.body );
+  // console.log( req.body );
   var img = req.body.img;
   var base64Data = req.body.img.replace(/^data:image\/jpeg;base64,/, "");
-  require("fs").writeFile("./public/uploads/avatar.jpeg", base64Data, 'base64', function(err) {
+  require("fs").writeFile("./public/uploads/avatar.jpg", base64Data, 'base64', function(err) {
     if (err)
       res.status(500).send('save image failed');
     res.send( 'OK' );
