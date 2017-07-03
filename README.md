@@ -1,1 +1,6 @@
-# A image upload server with express
+# Run
+```javascript
+yarn
+npm start
+http://localhost:7000
+```
